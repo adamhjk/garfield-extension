@@ -1,0 +1,82 @@
+id: 85e0dd22-d1bc-4b3b-b15b-527a08c52990
+name: "@adam/garfield"
+description: Run a bounded independent review and repair loop without a coordinator agent.
+tags:
+  extension: "@adam/garfield"
+inputs:
+  properties:
+    runId:
+      type: string
+    workItem:
+      type: string
+    workspaceDir:
+      type: string
+    intent:
+      type: string
+    validationProgram:
+      type: string
+      default: ./tools/validate.sh
+    validationArgs:
+      type: array
+      items:
+        type: string
+      default: []
+    codexPath:
+      type: string
+      default: codex
+    model:
+      type: string
+      default: configured-default
+    reasoningEffort:
+      type: string
+      enum: [minimal, low, medium, high, xhigh]
+      default: high
+    agentTimeoutMs:
+      type: integer
+      default: 1800000
+    maxActorCalls:
+      type: integer
+      default: 2
+    maxReviewCalls:
+      type: integer
+      default: 16
+    maxConcurrentReviewers:
+      type: integer
+      default: 3
+  required:
+    - runId
+    - workItem
+    - workspaceDir
+    - intent
+jobs:
+  - name: garfield
+    description: Delegate the complete bounded algorithm to the Garfield extension method.
+    concurrency: 1
+    steps:
+      - name: run
+        description: Validate, review, repair, revalidate, and independently re-review.
+        task:
+          type: model_method
+          modelType: "@adam/garfield"
+          modelName: workflow-garfield
+          methodName: run
+          inputs:
+            runId: ${{ inputs.runId }}
+            workItem: ${{ inputs.workItem }}
+            workspaceDir: ${{ inputs.workspaceDir }}
+            intent: ${{ inputs.intent }}
+            validationProgram: ${{ inputs.validationProgram }}
+            validationArgs: ${{ inputs.validationArgs }}
+            codexPath: ${{ inputs.codexPath }}
+            model: ${{ inputs.model }}
+            reasoningEffort: ${{ inputs.reasoningEffort }}
+            agentTimeoutMs: ${{ inputs.agentTimeoutMs }}
+            maxActorCalls: ${{ inputs.maxActorCalls }}
+            maxReviewCalls: ${{ inputs.maxReviewCalls }}
+            maxConcurrentReviewers: ${{ inputs.maxConcurrentReviewers }}
+        dependsOn: []
+        weight: 0
+        allowFailure: false
+    dependsOn: []
+    weight: 0
+version: 1
