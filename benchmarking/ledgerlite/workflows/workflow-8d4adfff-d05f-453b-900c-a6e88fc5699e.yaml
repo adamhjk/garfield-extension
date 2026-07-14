@@ -1,0 +1,35 @@
+id: 8d4adfff-d05f-453b-900c-a6e88fc5699e
+name: validate-slice
+description: Run all deterministic public validation for a captured implementation slice.
+tags: {}
+inputs:
+  properties:
+    workItem:
+      type: string
+      minLength: 1
+      description: Stable benchmark work-item reference.
+    slice:
+      type: object
+      description: Captured swamp-garfield slice; retained as the workflow input contract.
+  required: [workItem, slice]
+jobs:
+  - name: validation
+    description: Execute the repository-owned aggregate validation command.
+    steps:
+      - name: public-validation
+        description: Run tests, vetting, and generated-client consistency checks.
+        task:
+          type: model_method
+          modelType: command/shell
+          modelName: ledgerlite-public-validation
+          methodName: execute
+          inputs:
+            run: ./tools/validate.sh
+            timeout: 15000
+            ignoreExitCode: false
+        dependsOn: []
+        weight: 0
+        allowFailure: false
+    dependsOn: []
+    weight: 0
+version: 1

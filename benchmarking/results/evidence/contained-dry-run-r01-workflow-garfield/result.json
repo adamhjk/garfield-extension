@@ -1,0 +1,19 @@
+{
+  "blocker": null,
+  "case_id": "contained-dry-run",
+  "coordinator_sessions": [
+    "019f61b5-757c-7290-a39e-03b47cdd0e46",
+    "019f61b7-ffc4-72d0-acc6-b49594f88988",
+    "019f61b9-3b49-7bc2-aab1-4cbf99710f8a"
+  ],
+  "duration_ms": 395848,
+  "final_patch": "final.patch",
+  "paired": false,
+  "random_seed": 20260713,
+  "randomized_order": 1,
+  "run_id": "contained-dry-run-r01-workflow-garfield",
+  "status": "passed",
+  "treatment": "workflow-garfield",
+  "work_item": "garfield-bench:contained-dry-run-r01-workflow-garfield:15e5da95-5e8f-4388-af55-4f9c850b1b4b",
+  "workspace_hash": "daff30b408e91795068aec200e479f0b75f65ee2b09644a67e8a69eb09674ff3"
+}

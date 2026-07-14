@@ -1,0 +1,40 @@
+diff --git a/cmd/ledgerctl/main.go b/cmd/ledgerctl/main.go
+--- a/cmd/ledgerctl/main.go
++++ b/cmd/ledgerctl/main.go
+@@ -41,10 +41,6 @@ func run(args []string, stdout, stderr io.Writer, expirer invoiceExpirer) int {
+ 		return 1
+ 	}
+ 	if *dryRun {
+-		if len(expired) == 0 {
+-			fmt.Fprintln(stdout, "nothing would expire")
+-			return 0
+-		}
+ 		fmt.Fprintf(stdout, "would expire %d %s\n", len(expired), invoiceNoun(len(expired)))
+ 		return 0
+ 	}
+diff --git a/internal/invoice/service.go b/internal/invoice/service.go
+--- a/internal/invoice/service.go
++++ b/internal/invoice/service.go
+@@ -28,14 +28,14 @@ func (s *Service) Expire(ctx context.Context, before time.Time, dryRun bool) ([]Invoice, error) {
+ 			if err := s.repository.SaveInvoice(ctx, invoices[i]); err != nil {
+ 				return nil, err
+ 			}
+-		}
+-		if err := s.repository.RecordAudit(ctx, audit.Entry{
+-			Kind:        "invoice.expired",
+-			AggregateID: invoices[i].ID,
+-			AccountID:   invoices[i].AccountID,
+-			At:          s.now(),
+-		}); err != nil {
+-			return nil, err
++			if err := s.repository.RecordAudit(ctx, audit.Entry{
++				Kind:        "invoice.expired",
++				AggregateID: invoices[i].ID,
++				AccountID:   invoices[i].AccountID,
++				At:          s.now(),
++			}); err != nil {
++				return nil, err
++			}
+ 		}
+ 	}
+ 

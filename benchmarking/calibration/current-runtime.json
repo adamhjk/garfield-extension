@@ -1,0 +1,42 @@
+{
+  "computed_tree_total": 95887,
+  "passed": true,
+  "reason": "exclusive parent/child totals reconcile exactly",
+  "runtime_tree_total": 95887,
+  "sessions": [
+    {
+      "agent_id": "019f5e16-6488-73a2-8d61-491b0e59076c",
+      "cached_input_tokens": 46080,
+      "cycle": 1,
+      "duration_ms": 23963,
+      "input_tokens": 49911,
+      "output_tokens": 292,
+      "parent_agent_id": null,
+      "reasoning_output_tokens": 46,
+      "role": "coordinator",
+      "run_id": "calibration",
+      "session_counting": "app-server-response-deltas",
+      "stage": "coordinator",
+      "tool_duration_ms": 0,
+      "tool_output_bytes": 0,
+      "total_tokens": 50203
+    },
+    {
+      "agent_id": "019f5e16-8315-74b1-9ff7-c07145a9384f",
+      "cached_input_tokens": 34048,
+      "cycle": 1,
+      "duration_ms": 14635,
+      "input_tokens": 45299,
+      "output_tokens": 385,
+      "parent_agent_id": "019f5e16-6488-73a2-8d61-491b0e59076c",
+      "reasoning_output_tokens": 143,
+      "role": "inspect_telemetry",
+      "run_id": "calibration",
+      "session_counting": "app-server-response-deltas",
+      "stage": "review",
+      "tool_duration_ms": 0,
+      "tool_output_bytes": 23538,
+      "total_tokens": 45684
+    }
+  ]
+}

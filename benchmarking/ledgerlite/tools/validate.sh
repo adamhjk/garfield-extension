@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+go test ./...
+go vet ./...
+go run ./tools/generate -check

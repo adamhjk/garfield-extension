@@ -1,0 +1,98 @@
+{
+  "assertions": [
+    {
+      "evidence": "go test ./... => 0; go vet ./... => 0; go run ./tools/generate -check => 0",
+      "passed": true,
+      "text": "public_validation"
+    },
+    {
+      "evidence": "go test -overlay=/home/adam/src/garfield-extension/benchmarking/runs-comparison/contained-dry-run-r01-workflow-garfield/hidden-overlay.json ./... => 0: ok  \texample.com/ledgerlite/cmd/ledgerctl\t0.003s\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\nok  \texample.com/ledgerlite/internal/invoice\t0.004s\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]",
+      "passed": true,
+      "text": "hidden_behavior"
+    },
+    {
+      "evidence": "go run ./tools/generate -check => 0: ",
+      "passed": true,
+      "text": "generated_output_matches_source"
+    },
+    {
+      "evidence": "the complete visible Go test suite passed",
+      "passed": true,
+      "text": "existing_behavior_unchanged"
+    },
+    {
+      "evidence": "all changed paths are in the case allowlist",
+      "passed": true,
+      "text": "no_unrelated_files"
+    },
+    {
+      "evidence": "4 files and 90 changed lines; limits are 6 files and 180 lines",
+      "passed": true,
+      "text": "change_budget"
+    },
+    {
+      "evidence": "coordinator event stream names the aggregate validation target",
+      "passed": true,
+      "text": "coordinator_validation_observed"
+    }
+  ],
+  "case_id": "contained-dry-run",
+  "changed_files": [
+    "cmd/ledgerctl/main.go",
+    "cmd/ledgerctl/main_test.go",
+    "internal/invoice/service.go",
+    "internal/invoice/service_test.go"
+  ],
+  "changed_lines": 90,
+  "hidden_command": {
+    "command": [
+      "go",
+      "test",
+      "-overlay=/home/adam/src/garfield-extension/benchmarking/runs-comparison/contained-dry-run-r01-workflow-garfield/hidden-overlay.json",
+      "./..."
+    ],
+    "duration_ms": 294,
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "ok  \texample.com/ledgerlite/cmd/ledgerctl\t0.003s\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\nok  \texample.com/ledgerlite/internal/invoice\t0.004s\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]\n"
+  },
+  "passed": true,
+  "public_commands": [
+    {
+      "command": [
+        "go",
+        "test",
+        "./..."
+      ],
+      "duration_ms": 312,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "ok  \texample.com/ledgerlite/cmd/ledgerctl\t(cached)\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\nok  \texample.com/ledgerlite/internal/invoice\t(cached)\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]\n"
+    },
+    {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "duration_ms": 110,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "go",
+        "run",
+        "./tools/generate",
+        "-check"
+      ],
+      "duration_ms": 64,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  ],
+  "seeded_defects_removed": true,
+  "unrelated_files": []
+}

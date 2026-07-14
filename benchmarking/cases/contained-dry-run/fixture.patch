@@ -1,0 +1,144 @@
+diff --git a/cmd/ledgerctl/main.go b/cmd/ledgerctl/main.go
+--- a/cmd/ledgerctl/main.go
++++ b/cmd/ledgerctl/main.go
+@@ -12,7 +12,7 @@ import (
+ )
+ 
+ type invoiceExpirer interface {
+-	Expire(context.Context, time.Time) ([]invoice.Invoice, error)
++	Expire(context.Context, time.Time, bool) ([]invoice.Invoice, error)
+ }
+ 
+ func run(args []string, stdout, stderr io.Writer, expirer invoiceExpirer) int {
+@@ -25,5 +25,6 @@ func run(args []string, stdout, stderr io.Writer, expirer invoiceExpirer) int {
+ 	flags.SetOutput(stderr)
+ 	beforeValue := flags.String("before", "", "expire invoices due before this RFC3339 timestamp")
++	dryRun := flags.Bool("dry-run", false, "report invoices without expiring them")
+ 	if err := flags.Parse(args[2:]); err != nil {
+ 		return 2
+ 	}
+@@ -34,11 +35,19 @@ func run(args []string, stdout, stderr io.Writer, expirer invoiceExpirer) int {
+ 		return 2
+ 	}
+ 
+-	expired, err := expirer.Expire(context.Background(), before)
++	expired, err := expirer.Expire(context.Background(), before, *dryRun)
+ 	if err != nil {
+ 		fmt.Fprintf(stderr, "expire invoices: %v\n", err)
+ 		return 1
+ 	}
++	if *dryRun {
++		if len(expired) == 0 {
++			fmt.Fprintln(stdout, "nothing would expire")
++			return 0
++		}
++		fmt.Fprintf(stdout, "would expire %d %s\n", len(expired), invoiceNoun(len(expired)))
++		return 0
++	}
+ 	fmt.Fprintf(stdout, "expired %d %s\n", len(expired), invoiceNoun(len(expired)))
+ 	return 0
+ }
+diff --git a/cmd/ledgerctl/main_test.go b/cmd/ledgerctl/main_test.go
+--- a/cmd/ledgerctl/main_test.go
++++ b/cmd/ledgerctl/main_test.go
+@@ -11,9 +11,11 @@ import (
+ type stubExpirer struct {
+ 	result []invoice.Invoice
+ 	before time.Time
++	dryRun bool
+ }
+ 
+-func (s *stubExpirer) Expire(_ context.Context, before time.Time) ([]invoice.Invoice, error) {
++func (s *stubExpirer) Expire(_ context.Context, before time.Time, dryRun bool) ([]invoice.Invoice, error) {
+ 	s.before = before
++	s.dryRun = dryRun
+ 	return s.result, nil
+ }
+@@ -33,3 +35,22 @@ func TestExpireCommandPreservesOutput(t *testing.T) {
+ 		t.Fatalf("stdout = %q", got)
+ 	}
+ }
++
++func TestDryRunReportsMatches(t *testing.T) {
++	expirer := &stubExpirer{result: []invoice.Invoice{{ID: "inv-1"}}}
++	var stdout bytes.Buffer
++	var stderr bytes.Buffer
++
++	exitCode := run([]string{
++		"invoices", "expire", "--before", "2026-07-13T12:00:00Z", "--dry-run",
++	}, &stdout, &stderr, expirer)
++	if exitCode != 0 {
++		t.Fatalf("exit = %d, stderr = %q", exitCode, stderr.String())
++	}
++	if !expirer.dryRun {
++		t.Fatal("dry-run was not forwarded")
++	}
++	if got := stdout.String(); got != "would expire 1 invoice\n" {
++		t.Fatalf("stdout = %q", got)
++	}
++}
+diff --git a/internal/invoice/service.go b/internal/invoice/service.go
+--- a/internal/invoice/service.go
++++ b/internal/invoice/service.go
+@@ -16,7 +16,7 @@ func NewService(repository Repository, now func() time.Time) *Service {
+ 	return &Service{repository: repository, now: now}
+ }
+ 
+-func (s *Service) Expire(ctx context.Context, before time.Time) ([]Invoice, error) {
++func (s *Service) Expire(ctx context.Context, before time.Time, dryRun bool) ([]Invoice, error) {
+ 	invoices, err := s.repository.DueBefore(ctx, before)
+ 	if err != nil {
+ 		return nil, err
+@@ -24,8 +24,10 @@ func (s *Service) Expire(ctx context.Context, before time.Time) ([]Invoice, error) {
+ 
+ 	for i := range invoices {
+ 		invoices[i].Status = StatusExpired
+-		if err := s.repository.SaveInvoice(ctx, invoices[i]); err != nil {
+-			return nil, err
++		if !dryRun {
++			if err := s.repository.SaveInvoice(ctx, invoices[i]); err != nil {
++				return nil, err
++			}
+ 		}
+ 		if err := s.repository.RecordAudit(ctx, audit.Entry{
+ 			Kind:        "invoice.expired",
+diff --git a/internal/invoice/service_test.go b/internal/invoice/service_test.go
+--- a/internal/invoice/service_test.go
++++ b/internal/invoice/service_test.go
+@@ -22,7 +22,7 @@ func TestExpireUpdatesDueInvoicesAndRecordsAudit(t *testing.T) {
+ 	})
+ 
+ 	service := invoice.NewService(repository, func() time.Time { return now })
+-	expired, err := service.Expire(context.Background(), now)
++	expired, err := service.Expire(context.Background(), now, false)
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -38,3 +38,27 @@ func TestExpireUpdatesDueInvoicesAndRecordsAudit(t *testing.T) {
+ 		t.Fatalf("audit entries = %d", got)
+ 	}
+ }
++
++func TestDryRunDoesNotMutateInvoice(t *testing.T) {
++	now := time.Date(2026, time.July, 13, 12, 0, 0, 0, time.UTC)
++	repository := store.NewMemory()
++	repository.SeedInvoice(invoice.Invoice{
++		ID: "inv-1", AccountID: "acct-1", DueAt: now.Add(-time.Hour), Status: invoice.StatusPending,
++	})
++
++	service := invoice.NewService(repository, func() time.Time { return now })
++	matches, err := service.Expire(context.Background(), now, true)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(matches) != 1 || matches[0].ID != "inv-1" {
++		t.Fatalf("matches = %#v", matches)
++	}
++	stored, ok := repository.Invoice("inv-1")
++	if !ok {
++		t.Fatal("invoice missing")
++	}
++	if stored.Status != invoice.StatusPending {
++		t.Fatalf("status = %q", stored.Status)
++	}
++}

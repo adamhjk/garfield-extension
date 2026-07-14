@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Garfield benchmark</title>
+<style>body{font:16px system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem}pre{white-space:pre-wrap;background:#f5f5f5;padding:1rem}table{border-collapse:collapse}th,td{border:1px solid #bbb;padding:.4rem}.bar-row{display:grid;grid-template-columns:280px 1fr 110px;gap:.6rem;margin:.5rem 0}.bar{background:#d85f45;height:1.2rem}svg{max-width:100%;height:auto;border:1px solid #ddd}</style></head>
+<body><h1>Garfield benchmark</h1>
+<p>Machine-readable data is embedded below. The Markdown report is available beside this page.</p>
+<h2>Median complete agent-tree tokens</h2><div class="bar-row"><span>contained-dry-run · garfield</span><span><span class="bar" style="display:block;width:37.79%"></span></span><strong>4639565</strong></div><div class="bar-row"><span>contained-dry-run · workflow-garfield</span><span><span class="bar" style="display:block;width:4.13%"></span></span><strong>506484</strong></div><div class="bar-row"><span>payment-idempotency · garfield</span><span><span class="bar" style="display:block;width:100.00%"></span></span><strong>12277282</strong></div><div class="bar-row"><span>payment-idempotency · workflow-garfield</span><span><span class="bar" style="display:block;width:12.79%"></span></span><strong>1570242</strong></div>
+<h2>Cumulative and amortized tokens</h2><p>Provide factory authoring tokens and paired run data to render amortization.</p>
+<h2>Report data</h2><pre>{
+  &quot;amortization&quot;: [],
+  &quot;factory_authoring_tokens&quot;: null,
+  &quot;groups&quot;: [
+    {
+      &quot;case_id&quot;: &quot;contained-dry-run&quot;,
+      &quot;median_agent_count&quot;: 23.0,
+      &quot;median_cached_input_tokens&quot;: 4234752.0,
+      &quot;median_cold_to_first_review_tokens&quot;: null,
+      &quot;median_coordinator_tokens&quot;: 2359497.0,
+      &quot;median_delegated_tokens&quot;: 2280068.0,
+      &quot;median_input_tokens&quot;: 4587514.0,
+      &quot;median_output_tokens&quot;: 52051.0,
+      &quot;median_resume_to_first_useful_action_tokens&quot;: null,
+      &quot;median_review_cycles&quot;: null,
+      &quot;median_tokens_per_success&quot;: 4639565.0,
+      &quot;median_total_agent_tree_tokens&quot;: 4639565.0,
+      &quot;median_uncached_input_tokens&quot;: 352762.0,
+      &quot;median_wall_clock_ms&quot;: 765740.0,
+      &quot;runs&quot;: 1,
+      &quot;success_rate&quot;: 1.0,
+      &quot;successes&quot;: 1,
+      &quot;token_dispersion&quot;: {
+        &quot;max&quot;: 4639565.0,
+        &quot;min&quot;: 4639565.0,
+        &quot;pstdev&quot;: 0.0
+      },
+      &quot;treatment&quot;: &quot;garfield&quot;
+    },
+    {
+      &quot;case_id&quot;: &quot;contained-dry-run&quot;,
+      &quot;median_agent_count&quot;: 3.0,
+      &quot;median_cached_input_tokens&quot;: 403200.0,
+      &quot;median_cold_to_first_review_tokens&quot;: null,
+      &quot;median_coordinator_tokens&quot;: 506484.0,
+      &quot;median_delegated_tokens&quot;: 0.0,
+      &quot;median_input_tokens&quot;: 490484.0,
+      &quot;median_output_tokens&quot;: 16000.0,
+      &quot;median_resume_to_first_useful_action_tokens&quot;: null,
+      &quot;median_review_cycles&quot;: 2.0,
+      &quot;median_tokens_per_success&quot;: 506484.0,
+      &quot;median_total_agent_tree_tokens&quot;: 506484.0,
+      &quot;median_uncached_input_tokens&quot;: 87284.0,
+      &quot;median_wall_clock_ms&quot;: 395848.0,
+      &quot;runs&quot;: 1,
+      &quot;success_rate&quot;: 1.0,
+      &quot;successes&quot;: 1,
+      &quot;token_dispersion&quot;: {
+        &quot;max&quot;: 506484.0,
+        &quot;min&quot;: 506484.0,
+        &quot;pstdev&quot;: 0.0
+      },
+      &quot;treatment&quot;: &quot;workflow-garfield&quot;
+    },
+    {
+      &quot;case_id&quot;: &quot;payment-idempotency&quot;,
+      &quot;median_agent_count&quot;: 45.0,
+      &quot;median_cached_input_tokens&quot;: 11180032.0,
+      &quot;median_cold_to_first_review_tokens&quot;: null,
+      &quot;median_coordinator_tokens&quot;: 6065470.0,
+      &quot;median_delegated_tokens&quot;: 6211812.0,
+      &quot;median_input_tokens&quot;: 12116251.0,
+      &quot;median_output_tokens&quot;: 161031.0,
+      &quot;median_resume_to_first_useful_action_tokens&quot;: null,
+      &quot;median_review_cycles&quot;: null,
+      &quot;median_tokens_per_success&quot;: null,
+      &quot;median_total_agent_tree_tokens&quot;: 12277282.0,
+      &quot;median_uncached_input_tokens&quot;: 936219.0,
+      &quot;median_wall_clock_ms&quot;: 1814578.0,
+      &quot;runs&quot;: 1,
+      &quot;success_rate&quot;: 0.0,
+      &quot;successes&quot;: 0,
+      &quot;token_dispersion&quot;: {
+        &quot;max&quot;: 12277282.0,
+        &quot;min&quot;: 12277282.0,
+        &quot;pstdev&quot;: 0.0
+      },
+      &quot;treatment&quot;: &quot;garfield&quot;
+    },
+    {
+      &quot;case_id&quot;: &quot;payment-idempotency&quot;,
+      &quot;median_agent_count&quot;: 6.0,
+      &quot;median_cached_input_tokens&quot;: 1293312.0,
+      &quot;median_cold_to_first_review_tokens&quot;: null,
+      &quot;median_coordinator_tokens&quot;: 1570242.0,
+      &quot;median_delegated_tokens&quot;: 0.0,
+      &quot;median_input_tokens&quot;: 1531626.0,
+      &quot;median_output_tokens&quot;: 38616.0,
+      &quot;median_resume_to_first_useful_action_tokens&quot;: null,
+      &quot;median_review_cycles&quot;: 3.0,
+      &quot;median_tokens_per_success&quot;: null,
+      &quot;median_total_agent_tree_tokens&quot;: 1570242.0,
+      &quot;median_uncached_input_tokens&quot;: 238314.0,
+      &quot;median_wall_clock_ms&quot;: 631774.0,
+      &quot;runs&quot;: 1,
+      &quot;success_rate&quot;: 0.0,
+      &quot;successes&quot;: 0,
+      &quot;token_dispersion&quot;: {
+        &quot;max&quot;: 1570242.0,
+        &quot;min&quot;: 1570242.0,
+        &quot;pstdev&quot;: 0.0
+      },
+      &quot;treatment&quot;: &quot;workflow-garfield&quot;
+    }
+  ],
+  &quot;limitations&quot;: [
+    &quot;cold-to-first-review and resume-to-first-useful-action token boundaries are null when the runtime does not emit token checkpoints at collaboration events&quot;,
+    &quot;qualitative patch comparison is intentionally separate from deterministic grading&quot;,
+    &quot;raw tree tokens equal input plus output; cached input is a subset of input, is not added twice, and is reported separately from uncached input&quot;
+  ],
+  &quot;records&quot;: [
+    {
+      &quot;agent_count&quot;: 23,
+      &quot;blocker&quot;: null,
+      &quot;cached_input_tokens&quot;: 4234752,
+      &quot;case_id&quot;: &quot;contained-dry-run&quot;,
+      &quot;cold_to_first_review_tokens&quot;: null,
+      &quot;coordinator_sessions&quot;: [
+        &quot;019f61a9-a5ae-7c01-bf90-8b09c8f7289a&quot;
+      ],
+      &quot;coordinator_tokens&quot;: 2359497,
+      &quot;delegated_tokens&quot;: 2280068,
+      &quot;duration_ms&quot;: 765740,
+      &quot;final_patch&quot;: &quot;final.patch&quot;,
+      &quot;grade_passed&quot;: true,
+      &quot;input_tokens&quot;: 4587514,
+      &quot;output_tokens&quot;: 52051,
+      &quot;paired&quot;: false,
+      &quot;random_seed&quot;: 20260713,
+      &quot;randomized_order&quot;: 1,
+      &quot;resume_to_first_useful_action_tokens&quot;: null,
+      &quot;review_cycles&quot;: null,
+      &quot;run_id&quot;: &quot;contained-dry-run-r01-garfield&quot;,
+      &quot;status&quot;: &quot;passed&quot;,
+      &quot;total_agent_tree_tokens&quot;: 4639565,
+      &quot;treatment&quot;: &quot;garfield&quot;,
+      &quot;uncached_input_tokens&quot;: 352762,
+      &quot;work_item&quot;: &quot;garfield-bench:contained-dry-run-r01-garfield:23e56452-1339-416f-8b9e-fe74c66c579f&quot;,
+      &quot;workspace_hash&quot;: &quot;daff30b408e91795068aec200e479f0b75f65ee2b09644a67e8a69eb09674ff3&quot;
+    },
+    {
+      &quot;agent_count&quot;: 3,
+      &quot;blocker&quot;: null,
+      &quot;cached_input_tokens&quot;: 403200,
+      &quot;case_id&quot;: &quot;contained-dry-run&quot;,
+      &quot;cold_to_first_review_tokens&quot;: null,
+      &quot;coordinator_sessions&quot;: [
+        &quot;019f61b5-757c-7290-a39e-03b47cdd0e46&quot;,
+        &quot;019f61b7-ffc4-72d0-acc6-b49594f88988&quot;,
+        &quot;019f61b9-3b49-7bc2-aab1-4cbf99710f8a&quot;
+      ],
+      &quot;coordinator_tokens&quot;: 506484,
+      &quot;delegated_tokens&quot;: 0,
+      &quot;duration_ms&quot;: 395848,
+      &quot;final_patch&quot;: &quot;final.patch&quot;,
+      &quot;grade_passed&quot;: true,
+      &quot;input_tokens&quot;: 490484,
+      &quot;output_tokens&quot;: 16000,
+      &quot;paired&quot;: false,
+      &quot;random_seed&quot;: 20260713,
+      &quot;randomized_order&quot;: 1,
+      &quot;resume_to_first_useful_action_tokens&quot;: null,
+      &quot;review_cycles&quot;: 2,
+      &quot;run_id&quot;: &quot;contained-dry-run-r01-workflow-garfield&quot;,
+      &quot;status&quot;: &quot;passed&quot;,
+      &quot;total_agent_tree_tokens&quot;: 506484,
+      &quot;treatment&quot;: &quot;workflow-garfield&quot;,
+      &quot;uncached_input_tokens&quot;: 87284,
+      &quot;work_item&quot;: &quot;garfield-bench:contained-dry-run-r01-workflow-garfield:15e5da95-5e8f-4388-af55-4f9c850b1b4b&quot;,
+      &quot;workspace_hash&quot;: &quot;daff30b408e91795068aec200e479f0b75f65ee2b09644a67e8a69eb09674ff3&quot;
+    },
+    {
+      &quot;agent_count&quot;: 45,
+      &quot;blocker&quot;: null,
+      &quot;cached_input_tokens&quot;: 11180032,
+      &quot;case_id&quot;: &quot;payment-idempotency&quot;,
+      &quot;cold_to_first_review_tokens&quot;: null,
+      &quot;coordinator_sessions&quot;: [
+        &quot;019f61bb-6015-79e0-a3a3-2e2c76d84a20&quot;,
+        &quot;019f61c3-fab8-7432-9a4d-3d6cc18b23ee&quot;
+      ],
+      &quot;coordinator_tokens&quot;: 6065470,
+      &quot;delegated_tokens&quot;: 6211812,
+      &quot;duration_ms&quot;: 1814578,
+      &quot;final_patch&quot;: &quot;final.patch&quot;,
+      &quot;grade_passed&quot;: false,
+      &quot;input_tokens&quot;: 12116251,
+      &quot;output_tokens&quot;: 161031,
+      &quot;paired&quot;: false,
+      &quot;random_seed&quot;: 20260713,
+      &quot;randomized_order&quot;: 1,
+      &quot;resume_to_first_useful_action_tokens&quot;: null,
+      &quot;review_cycles&quot;: null,
+      &quot;run_id&quot;: &quot;payment-idempotency-r01-garfield&quot;,
+      &quot;status&quot;: &quot;failed&quot;,
+      &quot;total_agent_tree_tokens&quot;: 12277282,
+      &quot;treatment&quot;: &quot;garfield&quot;,
+      &quot;uncached_input_tokens&quot;: 936219,
+      &quot;work_item&quot;: &quot;garfield-bench:payment-idempotency-r01-garfield:1f987da7-45a3-4452-942e-7f2996ee02fa&quot;,
+      &quot;workspace_hash&quot;: &quot;0565df8e68330507529126e890f873fcb4d2578fe8567edd78716405cb025786&quot;
+    },
+    {
+      &quot;agent_count&quot;: 6,
+      &quot;blocker&quot;: &quot;findings_remain_after_actor_limit&quot;,
+      &quot;cached_input_tokens&quot;: 1293312,
+      &quot;case_id&quot;: &quot;payment-idempotency&quot;,
+      &quot;cold_to_first_review_tokens&quot;: null,
+      &quot;coordinator_sessions&quot;: [
+        &quot;019f61d7-32f6-70e3-b1bf-a93368b8a70d&quot;,
+        &quot;019f61da-1c2d-7732-8da6-f9f4e5b568a0&quot;,
+        &quot;019f61da-1c18-7ae1-bdda-30985e3337dd&quot;,
+        &quot;019f61dc-e479-7e02-a56a-5ccf44f15cc6&quot;,
+        &quot;019f61de-85ac-7222-8b4c-0b5366c50f88&quot;,
+        &quot;019f61de-85eb-78b1-ad64-0563f32115c3&quot;
+      ],
+      &quot;coordinator_tokens&quot;: 1570242,
+      &quot;delegated_tokens&quot;: 0,
+      &quot;duration_ms&quot;: 631774,
+      &quot;final_patch&quot;: &quot;final.patch&quot;,
+      &quot;grade_passed&quot;: false,
+      &quot;input_tokens&quot;: 1531626,
+      &quot;output_tokens&quot;: 38616,
+      &quot;paired&quot;: false,
+      &quot;random_seed&quot;: 20260713,
+      &quot;randomized_order&quot;: 1,
+      &quot;resume_to_first_useful_action_tokens&quot;: null,
+      &quot;review_cycles&quot;: 3,
+      &quot;run_id&quot;: &quot;payment-idempotency-r01-workflow-garfield&quot;,
+      &quot;status&quot;: &quot;failed&quot;,
+      &quot;total_agent_tree_tokens&quot;: 1570242,
+      &quot;treatment&quot;: &quot;workflow-garfield&quot;,
+      &quot;uncached_input_tokens&quot;: 238314,
+      &quot;work_item&quot;: &quot;garfield-bench:payment-idempotency-r01-workflow-garfield:e843532f-9b38-47d9-befb-8131449d866e&quot;,
+      &quot;workspace_hash&quot;: &quot;0565df8e68330507529126e890f873fcb4d2578fe8567edd78716405cb025786&quot;
+    }
+  ],
+  &quot;run_count&quot;: 4
+}</pre>
+<h2>Markdown</h2><pre># Garfield benchmark
+
+Completed runs: 4
+
+| Case | Treatment | Success | Raw tree tokens | Uncached input | Cached input | Output | Coordinator | Delegated | Agents | Wall ms |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| contained-dry-run | garfield | 1/1 | 4639565 | 352762 | 4234752 | 52051 | 2359497 | 2280068 | 23 | 765740 |
+| contained-dry-run | workflow-garfield | 1/1 | 506484 | 87284 | 403200 | 16000 | 506484 | 0 | 3 | 395848 |
+| payment-idempotency | garfield | 0/1 | 12277282 | 936219 | 11180032 | 161031 | 6065470 | 6211812 | 45 | 1814578 |
+| payment-idempotency | workflow-garfield | 0/1 | 1570242 | 238314 | 1293312 | 38616 | 1570242 | 0 | 6 | 631774 |
+
+## Amortization
+
+Insufficient paired data for amortization.
+
+## Limitations
+
+- cold-to-first-review and resume-to-first-useful-action token boundaries are null when the runtime does not emit token checkpoints at collaboration events
+- qualitative patch comparison is intentionally separate from deterministic grading
+- raw tree tokens equal input plus output; cached input is a subset of input, is not added twice, and is reported separately from uncached input
+</pre></body></html>

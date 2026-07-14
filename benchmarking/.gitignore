@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.work/
+runs*/
+report*/
+blind-review*/
+.fixture-src/
+.solution-src/
+calibration.json
+calibration.events.jsonl

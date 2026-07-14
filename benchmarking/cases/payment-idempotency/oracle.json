@@ -1,0 +1,33 @@
+{
+  "case_id": "payment-idempotency",
+  "max_changed_files": 12,
+  "max_changed_lines": 360,
+  "candidate_public_expected_pass": false,
+  "candidate_public_exit_codes": [0, 0, 1],
+  "candidate_failure_markers": [
+    "generated/client.go is stale",
+    "TestHiddenIdempotencyKeysAreScopedPerAccount",
+    "TestHiddenReplayDoesNotDuplicateAudit",
+    "TestHiddenConflictUsesDocumentedErrorShape"
+  ],
+  "allowed_path_prefixes": [
+    "README.md",
+    "internal/payment/",
+    "internal/store/",
+    "internal/api/",
+    "api/openapi.json",
+    "generated/client.go"
+  ],
+  "forced_restart_after_material_fix": true,
+  "seeded_defects": [
+    "idempotency keys are stored globally instead of per account",
+    "a successful replay records a second payment.created audit entry",
+    "generated/client.go is stale after the OpenAPI change",
+    "HTTP 409 uses an undocumented error object"
+  ],
+  "required_public_commands": [
+    "go test ./...",
+    "go vet ./...",
+    "go run ./tools/generate -check"
+  ]
+}

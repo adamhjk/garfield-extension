@@ -1,0 +1,18 @@
+{
+  "blocker": null,
+  "case_id": "payment-idempotency",
+  "coordinator_sessions": [
+    "019f61bb-6015-79e0-a3a3-2e2c76d84a20",
+    "019f61c3-fab8-7432-9a4d-3d6cc18b23ee"
+  ],
+  "duration_ms": 1814578,
+  "final_patch": "final.patch",
+  "paired": false,
+  "random_seed": 20260713,
+  "randomized_order": 1,
+  "run_id": "payment-idempotency-r01-garfield",
+  "status": "failed",
+  "treatment": "garfield",
+  "work_item": "garfield-bench:payment-idempotency-r01-garfield:1f987da7-45a3-4452-942e-7f2996ee02fa",
+  "workspace_hash": "0565df8e68330507529126e890f873fcb4d2578fe8567edd78716405cb025786"
+}

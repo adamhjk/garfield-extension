@@ -1,0 +1,348 @@
+diff --git a/internal/payment/payment.go b/internal/payment/payment.go
+--- a/internal/payment/payment.go
++++ b/internal/payment/payment.go
+@@ -26,6 +26,7 @@
+ }
+ 
+ type Repository interface {
+-	SavePayment(context.Context, Payment) error
++	FindPaymentByIdempotencyKey(context.Context, string) (IdempotencyRecord, bool, error)
++	SavePayment(context.Context, Payment, string, CreateRequest) error
+ 	RecordAudit(context.Context, audit.Entry) error
+ }
+diff --git a/internal/payment/idempotency.go b/internal/payment/idempotency.go
+new file mode 100644
+--- /dev/null
++++ b/internal/payment/idempotency.go
+@@ -0,0 +1,14 @@
++package payment
++
++import "errors"
++
++var ErrIdempotencyConflict = errors.New("idempotency key conflicts with an existing payment")
++
++type IdempotencyRecord struct {
++	Payment Payment
++	Request CreateRequest
++}
++
++func (r IdempotencyRecord) Matches(request CreateRequest) bool {
++	return r.Request.Amount == request.Amount && r.Request.Currency == request.Currency
++}
+diff --git a/internal/payment/service.go b/internal/payment/service.go
+--- a/internal/payment/service.go
++++ b/internal/payment/service.go
+@@ -17,27 +17,45 @@
+ 	return &Service{repository: repository, newID: newID, now: now}
+ }
+ 
+-func (s *Service) Create(ctx context.Context, accountID string, request CreateRequest) (Payment, error) {
+-	if accountID == "" || !request.Valid() {
++func (s *Service) Create(ctx context.Context, accountID, idempotencyKey string, request CreateRequest) (Payment, error) {
++	if accountID == "" || idempotencyKey == "" || !request.Valid() {
+ 		return Payment{}, ErrInvalidRequest
+ 	}
+ 
++	record, found, err := s.repository.FindPaymentByIdempotencyKey(ctx, idempotencyKey)
++	if err != nil {
++		return Payment{}, err
++	}
++	if found {
++		if !record.Matches(request) {
++			return Payment{}, ErrIdempotencyConflict
++		}
++		if err := s.recordCreated(ctx, record.Payment); err != nil {
++			return Payment{}, err
++		}
++		return record.Payment, nil
++	}
++
+ 	created := Payment{
+ 		ID:        s.newID(),
+ 		AccountID: accountID,
+ 		Amount:    request.Amount,
+ 		Currency:  request.Currency,
+ 	}
+-	if err := s.repository.SavePayment(ctx, created); err != nil {
++	if err := s.repository.SavePayment(ctx, created, idempotencyKey, request); err != nil {
+ 		return Payment{}, err
+ 	}
+-	if err := s.repository.RecordAudit(ctx, audit.Entry{
+-		Kind:        "payment.created",
+-		AggregateID: created.ID,
+-		AccountID:   accountID,
+-		At:          s.now(),
+-	}); err != nil {
++	if err := s.recordCreated(ctx, created); err != nil {
+ 		return Payment{}, err
+ 	}
+ 	return created, nil
+ }
++
++func (s *Service) recordCreated(ctx context.Context, created Payment) error {
++	return s.repository.RecordAudit(ctx, audit.Entry{
++		Kind:        "payment.created",
++		AggregateID: created.ID,
++		AccountID:   created.AccountID,
++		At:          s.now(),
++	})
++}
+diff --git a/internal/payment/service_test.go b/internal/payment/service_test.go
+--- a/internal/payment/service_test.go
++++ b/internal/payment/service_test.go
+@@ -2,6 +2,7 @@
+ 
+ import (
+ 	"context"
++	"errors"
+ 	"testing"
+ 	"time"
+ 
+@@ -13,7 +14,7 @@
+ 	repository := store.NewMemory()
+ 	service := payment.NewService(repository, func() string { return "pay-1" }, time.Now)
+ 
+-	created, err := service.Create(context.Background(), "acct-1", payment.CreateRequest{
++	created, err := service.Create(context.Background(), "acct-1", "key-1", payment.CreateRequest{
+ 		Amount: 1250, Currency: "USD",
+ 	})
+ 	if err != nil {
+@@ -26,3 +27,31 @@
+ 		t.Fatalf("audit entries = %d", got)
+ 	}
+ }
++
++func TestCreatePaymentReplaysAndConflicts(t *testing.T) {
++	repository := store.NewMemory()
++	nextID := 0
++	service := payment.NewService(repository, func() string {
++		nextID++
++		return "pay-" + string(rune('0'+nextID))
++	}, time.Now)
++	request := payment.CreateRequest{Amount: 1250, Currency: "USD"}
++
++	first, err := service.Create(context.Background(), "acct-1", "key-1", request)
++	if err != nil {
++		t.Fatal(err)
++	}
++	replayed, err := service.Create(context.Background(), "acct-1", "key-1", request)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if replayed.ID != first.ID {
++		t.Fatalf("replayed = %#v, first = %#v", replayed, first)
++	}
++	_, err = service.Create(context.Background(), "acct-1", "key-1", payment.CreateRequest{
++		Amount: 1300, Currency: "USD",
++	})
++	if !errors.Is(err, payment.ErrIdempotencyConflict) {
++		t.Fatalf("conflict error = %v", err)
++	}
++}
+diff --git a/internal/store/memory.go b/internal/store/memory.go
+--- a/internal/store/memory.go
++++ b/internal/store/memory.go
+@@ -12,16 +12,18 @@
+ )
+ 
+ type Memory struct {
+-	mu       sync.Mutex
+-	invoices map[string]invoice.Invoice
+-	payments map[string]payment.Payment
+-	audit    []audit.Entry
++	mu          sync.Mutex
++	invoices    map[string]invoice.Invoice
++	payments    map[string]payment.Payment
++	idempotency map[string]payment.IdempotencyRecord
++	audit       []audit.Entry
+ }
+ 
+ func NewMemory() *Memory {
+ 	return &Memory{
+-		invoices: make(map[string]invoice.Invoice),
+-		payments: make(map[string]payment.Payment),
++		invoices:    make(map[string]invoice.Invoice),
++		payments:    make(map[string]payment.Payment),
++		idempotency: make(map[string]payment.IdempotencyRecord),
+ 	}
+ }
+ 
+@@ -59,10 +61,18 @@
+ 	return nil
+ }
+ 
+-func (m *Memory) SavePayment(_ context.Context, value payment.Payment) error {
++func (m *Memory) FindPaymentByIdempotencyKey(_ context.Context, key string) (payment.IdempotencyRecord, bool, error) {
++	m.mu.Lock()
++	defer m.mu.Unlock()
++	record, ok := m.idempotency[key]
++	return record, ok, nil
++}
++
++func (m *Memory) SavePayment(_ context.Context, value payment.Payment, key string, request payment.CreateRequest) error {
+ 	m.mu.Lock()
+ 	defer m.mu.Unlock()
+ 	m.payments[value.ID] = value
++	m.idempotency[key] = payment.IdempotencyRecord{Payment: value, Request: request}
+ 	return nil
+ }
+ 
+diff --git a/internal/store/memory_test.go b/internal/store/memory_test.go
+--- a/internal/store/memory_test.go
++++ b/internal/store/memory_test.go
+@@ -6,6 +6,7 @@
+ 	"time"
+ 
+ 	"example.com/ledgerlite/internal/invoice"
++	"example.com/ledgerlite/internal/payment"
+ 	"example.com/ledgerlite/internal/store"
+ )
+ 
+@@ -24,3 +25,19 @@
+ 		t.Fatalf("got = %#v", got)
+ 	}
+ }
++
++func TestIdempotencyLookupReturnsStoredPayment(t *testing.T) {
++	repository := store.NewMemory()
++	created := payment.Payment{ID: "pay-1", AccountID: "acct-1", Amount: 1250, Currency: "USD"}
++	request := payment.CreateRequest{Amount: 1250, Currency: "USD"}
++	if err := repository.SavePayment(context.Background(), created, "key-1", request); err != nil {
++		t.Fatal(err)
++	}
++	record, ok, err := repository.FindPaymentByIdempotencyKey(context.Background(), "key-1")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if !ok || record.Payment.ID != created.ID || !record.Matches(request) {
++		t.Fatalf("record = %#v, ok = %v", record, ok)
++	}
++}
+diff --git a/internal/api/handler.go b/internal/api/handler.go
+--- a/internal/api/handler.go
++++ b/internal/api/handler.go
+@@ -11,7 +11,7 @@
+ )
+ 
+ type paymentCreator interface {
+-	Create(context.Context, string, payment.CreateRequest) (payment.Payment, error)
++	Create(context.Context, string, string, payment.CreateRequest) (payment.Payment, error)
+ }
+ 
+ type Handler struct {
+@@ -37,11 +37,17 @@
+ 		return
+ 	}
+ 
+-	created, err := h.payments.Create(request.Context(), accountID, input)
++	created, err := h.payments.Create(request.Context(), accountID, request.Header.Get("Idempotency-Key"), input)
+ 	if errors.Is(err, payment.ErrInvalidRequest) {
+ 		writeError(writer, http.StatusBadRequest, "invalid_request", "payment input is invalid")
+ 		return
+ 	}
++	if errors.Is(err, payment.ErrIdempotencyConflict) {
++		writer.Header().Set("Content-Type", "application/json")
++		writer.WriteHeader(http.StatusConflict)
++		_ = json.NewEncoder(writer).Encode(map[string]string{"error": "idempotency conflict"})
++		return
++	}
+ 	if err != nil {
+ 		writeError(writer, http.StatusInternalServerError, "internal_error", "payment could not be created")
+ 		return
+diff --git a/internal/api/handler_test.go b/internal/api/handler_test.go
+--- a/internal/api/handler_test.go
++++ b/internal/api/handler_test.go
+@@ -18,6 +18,7 @@
+ 	handler := api.NewHandler(service)
+ 
+ 	request := httptest.NewRequest(http.MethodPost, "/accounts/acct-1/payments", bytes.NewBufferString(`{"amount":1250,"currency":"USD"}`))
++	request.Header.Set("Idempotency-Key", "key-1")
+ 	response := httptest.NewRecorder()
+ 	handler.ServeHTTP(response, request)
+ 
+@@ -28,3 +29,21 @@
+ 		t.Fatalf("content type = %q", got)
+ 	}
+ }
++
++func TestCreatePaymentConflict(t *testing.T) {
++	repository := store.NewMemory()
++	service := payment.NewService(repository, func() string { return "pay-1" }, time.Now)
++	handler := api.NewHandler(service)
++
++	first := httptest.NewRequest(http.MethodPost, "/accounts/acct-1/payments", bytes.NewBufferString(`{"amount":1250,"currency":"USD"}`))
++	first.Header.Set("Idempotency-Key", "key-1")
++	handler.ServeHTTP(httptest.NewRecorder(), first)
++
++	conflict := httptest.NewRequest(http.MethodPost, "/accounts/acct-1/payments", bytes.NewBufferString(`{"amount":1300,"currency":"USD"}`))
++	conflict.Header.Set("Idempotency-Key", "key-1")
++	response := httptest.NewRecorder()
++	handler.ServeHTTP(response, conflict)
++	if response.Code != http.StatusConflict {
++		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
++	}
++}
+diff --git a/api/openapi.json b/api/openapi.json
+--- a/api/openapi.json
++++ b/api/openapi.json
+@@ -2,7 +2,7 @@
+   "openapi": "3.1.0",
+   "info": {
+     "title": "Ledgerlite API",
+-    "version": "1.0.0"
++    "version": "1.1.0"
+   },
+   "paths": {
+     "/accounts/{accountId}/payments": {
+@@ -14,6 +14,12 @@
+             "in": "path",
+             "required": true,
+             "schema": { "type": "string" }
++          },
++          {
++            "name": "Idempotency-Key",
++            "in": "header",
++            "required": true,
++            "schema": { "type": "string", "minLength": 1 }
+           }
+         ],
+         "requestBody": {
+@@ -26,14 +32,22 @@
+         },
+         "responses": {
+           "201": {
+-            "description": "Payment created",
++            "description": "Payment created or replayed",
+             "content": {
+               "application/json": {
+                 "schema": { "$ref": "#/components/schemas/Payment" }
+               }
+             }
+           },
+-          "400": { "$ref": "#/components/responses/Error" }
++          "400": { "$ref": "#/components/responses/Error" },
++          "409": {
++            "description": "The idempotency key was already used with different input",
++            "content": {
++              "application/json": {
++                "schema": { "$ref": "#/components/schemas/Error" }
++              }
++            }
++          }
+         }
+       }
+     }
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -3,6 +3,10 @@
+ `ledgerlite` is a deliberately small invoice and payment service used by the
+ Garfield coordinator benchmark. It has no network or service dependencies.
+ 
++Payment creation requires an `Idempotency-Key`. Repeating the same key and
++payload within an account returns the original payment; changing the payload
++returns the documented conflict response.
++
+ ## Validation
+ 
+ Run the aggregate validation entry point from the repository root:

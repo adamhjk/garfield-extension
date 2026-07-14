@@ -1,0 +1,25 @@
+{
+  "case_id": "contained-dry-run",
+  "max_changed_files": 6,
+  "max_changed_lines": 180,
+  "candidate_public_expected_pass": true,
+  "candidate_public_exit_codes": [0, 0, 0],
+  "candidate_failure_markers": [
+    "TestHiddenDryRunWritesNoAuditEvent",
+    "TestHiddenDryRunZeroMatchOutput"
+  ],
+  "allowed_path_prefixes": [
+    "cmd/ledgerctl/",
+    "internal/invoice/"
+  ],
+  "forced_restart_after_material_fix": false,
+  "seeded_defects": [
+    "dry-run records invoice.expired audit entries",
+    "dry-run zero-match output does not use the normal count-and-noun format"
+  ],
+  "required_public_commands": [
+    "go test ./...",
+    "go vet ./...",
+    "go run ./tools/generate -check"
+  ]
+}

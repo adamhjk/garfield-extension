@@ -1,0 +1,17 @@
+{
+  "blocker": null,
+  "case_id": "contained-dry-run",
+  "coordinator_sessions": [
+    "019f61a9-a5ae-7c01-bf90-8b09c8f7289a"
+  ],
+  "duration_ms": 765740,
+  "final_patch": "final.patch",
+  "paired": false,
+  "random_seed": 20260713,
+  "randomized_order": 1,
+  "run_id": "contained-dry-run-r01-garfield",
+  "status": "passed",
+  "treatment": "garfield",
+  "work_item": "garfield-bench:contained-dry-run-r01-garfield:23e56452-1339-416f-8b9e-fe74c66c579f",
+  "workspace_hash": "daff30b408e91795068aec200e479f0b75f65ee2b09644a67e8a69eb09674ff3"
+}
