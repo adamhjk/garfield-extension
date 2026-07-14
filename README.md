@@ -331,4 +331,4 @@ This extension is based on the original Garfield agent skill in
 [dcramer/agents](https://github.com/dcramer/agents). See
 [`skills/garfield`](https://github.com/dcramer/agents/tree/main/skills/garfield)
 for the skill. This repository is licensed under the
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](LICENSE.md).

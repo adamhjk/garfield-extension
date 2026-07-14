@@ -1109,11 +1109,13 @@ async function captureSnapshot(
       signal,
     ),
   ]);
+  // Hash the raw content so snapshot identity tracks the true worktree state,
+  // but never persist or prompt with unredacted text.
   const digest = await sha256(`${status.stdout}\n${diff.stdout}`);
-  const bounded = truncate(diff.stdout, MAX_DIFF_BYTES);
+  const bounded = truncate(redactSensitiveText(diff.stdout), MAX_DIFF_BYTES);
   return SnapshotSchema.parse({
     hash: digest,
-    status: status.stdout,
+    status: redactSensitiveText(status.stdout),
     diff: bounded.text,
     diffTruncated: bounded.truncated,
     changedPaths: changedPathsFromStatus(status.stdout),
@@ -1268,10 +1270,11 @@ async function runChecked(
 ): Promise<ProcessResult> {
   const result = await runProcess(command, { cwd, timeoutMs: 30_000, signal });
   if (result.exitCode !== 0 || result.timedOut) {
+    // git stderr can echo remote URLs carrying embedded credentials.
     throw new Error(
-      `${
-        command.join(" ")
-      } failed (${result.exitCode}): ${result.stderr.trim()}`,
+      `${command.join(" ")} failed (${result.exitCode}): ${
+        redactSensitiveText(result.stderr.trim())
+      }`,
     );
   }
   return result;
@@ -1380,8 +1383,12 @@ function assertNoSensitiveChanges(snapshot: Snapshot): void {
       }`,
     );
   }
+  // The diff is redacted before it reaches this point, so key material shows up
+  // as the redaction marker rather than the PEM header. Match both: the raw
+  // header alone would silently stop firing once redaction is applied.
   if (
-    /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i.test(snapshot.diff)
+    /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i.test(snapshot.diff) ||
+    snapshot.diff.includes("<redacted-private-key>")
   ) {
     throw new Error("changed_private_key_material_not_safe_for_agent_prompt");
   }
@@ -1690,6 +1697,10 @@ export const model = {
               assignment,
             );
           } catch (error) {
+            // Cancellation is not a semantic review failure. Swallowing it here
+            // would persist an infinite-lifetime "blocked" verdict for a run the
+            // caller aborted, so let it propagate.
+            if (context.signal.aborted) throw error;
             context.logger.error(
               "Garfield {role} process could not be completed: {error}",
               {

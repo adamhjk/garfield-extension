@@ -457,6 +457,66 @@ Deno.test("run persists a blocked result when validation cannot be repaired", as
   }
 });
 
+Deno.test("run redacts secrets from the persisted and prompted snapshot", async () => {
+  const root = await makeWorkspace(0);
+  try {
+    const codex = await makeFakeCodex(root);
+    await Deno.mkdir(`${root}/config`, { recursive: true });
+    await Deno.writeTextFile(`${root}/config/app.yaml`, "service: ledger\n");
+    await command(root, ["git", "add", "config/app.yaml"]);
+    await command(root, ["git", "commit", "--quiet", "-m", "add config"]);
+    // An ordinary config file: the sensitive-PATH guard does not match it, so
+    // only value redaction keeps the secret out of the persisted snapshot.
+    await Deno.writeTextFile(
+      `${root}/config/app.yaml`,
+      "service: ledger\napi_key=SUPER-SECRET-VALUE\n",
+    );
+    const stored = new Map<string, Record<string, unknown>>();
+    await model.methods.run.execute(
+      runArgs(root, codex, "redaction-work-item", 2),
+      testContext(stored),
+    );
+    const result = [...stored.entries()].find(([name]) =>
+      name.startsWith("result-")
+    )?.[1];
+    assertEquals(result?.status, "passed");
+    const snapshot = result?.snapshot as Record<string, unknown>;
+    assertStringIncludes(snapshot.diff as string, "api_key=<redacted>");
+    assertEquals(
+      (snapshot.diff as string).includes("SUPER-SECRET-VALUE"),
+      false,
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("run propagates cancellation instead of persisting a blocked verdict", async () => {
+  const root = await makeWorkspace(0);
+  try {
+    const codex = await makeSlowFakeCodex(root);
+    await Deno.writeTextFile(`${root}/README.md`, "test workspace\nchanged\n");
+    const stored = new Map<string, Record<string, unknown>>();
+    const controller = new AbortController();
+    const settled = model.methods.run.execute(
+      runArgs(root, codex, "cancelled-work-item", 2),
+      { ...testContext(stored), signal: controller.signal },
+    ).then(() => null, (error: unknown) => error);
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    controller.abort();
+    const outcome = await settled;
+
+    assertEquals(outcome instanceof Error, true);
+    assertEquals(
+      [...stored.keys()].some((name) => name.startsWith("result-")),
+      false,
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 async function makeWorkspace(validationExit: number): Promise<string> {
   const root = await Deno.makeTempDir({ prefix: "garfield-model-test-" });
   await Deno.mkdir(`${root}/tools`, { recursive: true });
@@ -511,6 +571,18 @@ printf '%s\\n' '${
   await Deno.chmod(path, 0o755);
   await command(root, ["git", "add", "fake-codex.sh"]);
   await command(root, ["git", "commit", "--quiet", "-m", "add fake codex"]);
+  return path;
+}
+
+/** A reviewer that outlives the cancellation window, so abort lands mid-agent. */
+async function makeSlowFakeCodex(root: string): Promise<string> {
+  const path = `${root}/slow-fake-codex.sh`;
+  // exec so the signal reaches the sleeping process itself rather than a shell
+  // that leaves the child holding the output pipe open.
+  await Deno.writeTextFile(path, `#!/bin/sh\ncat >/dev/null\nexec sleep 30\n`);
+  await Deno.chmod(path, 0o755);
+  await command(root, ["git", "add", "slow-fake-codex.sh"]);
+  await command(root, ["git", "commit", "--quiet", "-m", "add slow fake"]);
   return path;
 }
 

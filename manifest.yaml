@@ -1,9 +1,10 @@
 manifestVersion: 1
 name: "@adam/garfield"
-version: "2026.07.14.1"
+version: "2026.07.14.2"
 description: |
   Adaptive Garfield review and repair workflow with deterministic validation,
   checkpointing, finding adjudication, and flat process accounting.
+repository: https://github.com/adamhjk/garfield-extension
 paths:
   base: manifest
 models:
@@ -12,6 +13,7 @@ workflows:
   - workflows/workflow-85e0dd22-d1bc-4b3b-b15b-527a08c52990.yaml
 additionalFiles:
   - README.md
+  - LICENSE.md
 platforms: []
 labels:
   - agent
